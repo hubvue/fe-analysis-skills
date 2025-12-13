@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "fe-analysis-plugin",
+  "owner": {
+    "name": "kim",
+    "email": "cckcc.kim@gmail.com"
+  },
+  "metadata": {
+    "description": "Frontend project analysis by claude plugin",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "fe-analysis",
+      "description": "Frontend project analysis by claude plugin",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/analyzing-architecture",
+        "./skills/dependency-analysis"
+      ]
+    }
+  ]
+}
