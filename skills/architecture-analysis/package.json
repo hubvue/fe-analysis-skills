@@ -1,5 +1,5 @@
 {
-  "name": "analyzing-architecture",
+  "name": "architecture-analysis",
   "version": "1.0.0",
   "description": "Comprehensive project architecture analyzer that identifies technology stacks, build tools, and architectural patterns.",
   "main": "scripts/analyze-project.js",

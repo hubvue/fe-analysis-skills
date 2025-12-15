@@ -1,5 +1,5 @@
 {
-  "name": "analyzing-dependencies",
+  "name": "dependency-analysis",
   "version": "1.0.0",
   "description": "Comprehensive dependency analyzer that identifies unused, missing, phantom, and circular dependencies. Provides security vulnerability detection and version health analysis for optimized dependency management.",
   "main": "scripts/analyze-dependencies.js",
