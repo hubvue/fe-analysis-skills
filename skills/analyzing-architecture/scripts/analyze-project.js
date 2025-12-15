@@ -10,6 +10,12 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { createRequire } = require('module');
 
+// Import modular detectors
+const FrameworkDetector = require('./detectors/framework-detector');
+const BuildToolDetector = require('./detectors/build-tool-detector');
+const ArchitectureDetector = require('./detectors/architecture-detector');
+const ReportGenerator = require('./report-generator');
+
 class ProjectAnalyzer {
     constructor(projectPath, options = {}) {
         this.projectPath = path.resolve(projectPath);
@@ -30,17 +36,22 @@ class ProjectAnalyzer {
         const startTime = Date.now();
 
         try {
+            // Initialize detectors
+            const frameworkDetector = new FrameworkDetector(this.projectPath);
+            const buildToolDetector = new BuildToolDetector(this.projectPath);
+            const architectureDetector = new ArchitectureDetector(this.projectPath);
+
             // Analyze package manager
             await this.analyzePackageManager();
 
             // Analyze Node.js environment
             await this.analyzeNodeEnvironment();
 
-            // Analyze framework
-            await this.analyzeFramework();
+            // Analyze framework using detector
+            this.result.data.framework = await frameworkDetector.detect();
 
-            // Analyze build tools
-            await this.analyzeBuildTools();
+            // Analyze build tools using detector
+            this.result.data.buildTool = await buildToolDetector.detect();
 
             // Analyze TypeScript
             await this.analyzeTypeScript();
@@ -51,8 +62,9 @@ class ProjectAnalyzer {
             // Analyze directory structure
             await this.analyzeDirectoryStructure();
 
-            // Analyze architecture patterns
-            await this.analyzeArchitecturePatterns();
+            // Analyze architecture patterns using detector
+            const detectedPatterns = await architectureDetector.detect();
+            this.result.data.architecturePatterns = detectedPatterns.map(p => p.name);
 
         } catch (error) {
             this.result.success = false;
@@ -128,141 +140,7 @@ class ProjectAnalyzer {
         this.result.data.node = null;
     }
 
-    async analyzeFramework() {
-        const packageJsonPath = path.join(this.projectPath, 'package.json');
-        if (!await this.fileExists(packageJsonPath)) {
-            this.result.data.framework = null;
-            return;
-        }
-
-        try {
-            const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
-            const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
-
-            const framework = this.detectFramework(deps);
-            const metaFramework = this.detectMetaFramework(deps);
-
-            if (framework) {
-                this.result.data.framework = {
-                    name: framework.name,
-                    version: framework.version,
-                    major: framework.major,
-                    metaFramework
-                };
-            } else {
-                this.result.data.framework = null;
-            }
-        } catch (error) {
-            this.result.data.framework = null;
-        }
-    }
-
-    detectFramework(deps) {
-        const frameworks = {
-            vue: ['vue'],
-            react: ['react'],
-            angular: ['@angular/core', '@angular/common'],
-            svelte: ['svelte'],
-            solid: ['solid-js']
-        };
-
-        for (const [frameworkName, packages] of Object.entries(frameworks)) {
-            for (const pkg of packages) {
-                if (deps[pkg]) {
-                    const version = deps[pkg];
-                    const majorVersion = this.extractMajorVersion(version);
-                    return {
-                        name: frameworkName,
-                        version,
-                        major: majorVersion
-                    };
-                }
-            }
-        }
-
-        return null;
-    }
-
-    detectMetaFramework(deps) {
-        const metaFrameworks = {
-            nuxt: ['nuxt', '@nuxt/core'],
-            next: ['next', 'nextjs'],
-            remix: ['remix', '@remix-run/react'],
-            gatsby: ['gatsby'],
-            astro: ['astro']
-        };
-
-        for (const [framework, packages] of Object.entries(metaFrameworks)) {
-            if (packages.some(pkg => deps[pkg])) {
-                return framework;
-            }
-        }
-
-        return null;
-    }
-
-    async analyzeBuildTools() {
-        const buildTools = {
-            vite: ['vite'],
-            webpack: ['webpack', 'webpack-cli'],
-            rollup: ['rollup'],
-            parcel: ['parcel'],
-            esbuild: ['esbuild'],
-            turbopack: ['@next/swc-darwin-x64', '@next/swc-linux-x64-gnu']
-        };
-
-        const packageJsonPath = path.join(this.projectPath, 'package.json');
-        if (!await this.fileExists(packageJsonPath)) {
-            this.result.data.buildTool = null;
-            return;
-        }
-
-        try {
-            const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
-            const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
-
-            for (const [tool, packages] of Object.entries(buildTools)) {
-                for (const pkg of packages) {
-                    if (deps[pkg]) {
-                        const configFile = await this.findConfigFile(tool);
-                        const version = deps[pkg];
-                        this.result.data.buildTool = {
-                            name: tool,
-                            version,
-                            configFile
-                        };
-                        return;
-                    }
-                }
-            }
-
-            this.result.data.buildTool = null;
-        } catch (error) {
-            this.result.data.buildTool = null;
-        }
-    }
-
-    async findConfigFile(tool) {
-        const configPatterns = {
-            vite: ['vite.config.js', 'vite.config.ts', 'vite.config.mjs'],
-            webpack: ['webpack.config.js', 'webpack.config.ts', 'webpackfile.js'],
-            rollup: ['rollup.config.js', 'rollup.config.ts', 'rollup.config.mjs'],
-            parcel: ['.parcelrc'],
-            esbuild: ['esbuild.config.js', 'esbuild.js', 'build.js']
-        };
-
-        if (configPatterns[tool]) {
-            for (const pattern of configPatterns[tool]) {
-                const filePath = path.join(this.projectPath, pattern);
-                if (await this.fileExists(filePath)) {
-                    return pattern;
-                }
-            }
-        }
-
-        return null;
-    }
-
+  
     async analyzeTypeScript() {
         const tsconfigPath = path.join(this.projectPath, 'tsconfig.json');
         if (!await this.fileExists(tsconfigPath)) {
@@ -374,46 +252,7 @@ class ProjectAnalyzer {
         };
     }
 
-    async analyzeArchitecturePatterns() {
-        const patterns = [];
-
-        // Check for Monorepo
-        const monorepoFiles = ['pnpm-workspace.yaml', 'lerna.json', 'nx.json'];
-        if (await Promise.any(monorepoFiles.map(file => this.fileExists(path.join(this.projectPath, file))))) {
-            patterns.push('monorepo');
-        }
-
-        // Check for microservices
-        const items = await fs.readdir(this.projectPath, { withFileTypes: true });
-        if (items.some(item => item.isDirectory() && item.name.startsWith('service-'))) {
-            patterns.push('microservices');
-        }
-
-        // Check for modular architecture
-        const srcPath = path.join(this.projectPath, 'src');
-        if (await this.fileExists(srcPath)) {
-            const srcItems = await fs.readdir(srcPath, { withFileTypes: true });
-            const modules = srcItems.filter(item => item.isDirectory() && !item.name.startsWith('.'));
-            if (modules.length > 3) {
-                patterns.push('modular');
-            }
-        }
-
-        // Check for layered architecture
-        const layerPatterns = ['controllers', 'services', 'models', 'repositories'];
-        let layerCount = 0;
-        for (const pattern of layerPatterns) {
-            if (await this.fileExists(path.join(srcPath, pattern))) {
-                layerCount++;
-            }
-        }
-        if (layerCount >= 2) {
-            patterns.push('layered');
-        }
-
-        this.result.data.architecturePatterns = patterns.length > 0 ? patterns : null;
-    }
-
+    
     async getPackageManagerVersion(manager) {
         return new Promise((resolve) => {
             const process = spawn(manager, ['--version'], {
@@ -440,11 +279,7 @@ class ProjectAnalyzer {
         });
     }
 
-    extractMajorVersion(version) {
-        const match = version.replace(/^[\^~<>=]+/, '').match(/^(\d+)/);
-        return match ? parseInt(match[1]) : null;
-    }
-
+    
     async fileExists(filePath) {
         try {
             await fs.access(filePath);
@@ -477,18 +312,29 @@ if (require.main === module) {
 
     if (args.length === 0) {
         console.error('Usage: node analyze-project.js <project_path> [options]');
+        console.error('Options can be JSON string or flags:');
+        console.error('  --format <json|markdown|summary|scorecard>');
+        console.error('  --output <file>');
         process.exit(1);
     }
 
     const projectPath = args[0];
-    let options = {};
+    let options = { format: 'json' };
 
-    if (args.length > 1) {
-        try {
-            options = JSON.parse(args[1]);
-        } catch (error) {
-            console.error('Options must be valid JSON');
-            process.exit(1);
+    // Parse command line arguments
+    for (let i = 1; i < args.length; i++) {
+        if (args[i] === '--format' && i + 1 < args.length) {
+            options.format = args[++i];
+        } else if (args[i] === '--output' && i + 1 < args.length) {
+            options.outputFile = args[++i];
+        } else if (args[i].startsWith('{')) {
+            // JSON options string
+            try {
+                options = { ...options, ...JSON.parse(args[i]) };
+            } catch (error) {
+                console.error('Options must be valid JSON');
+                process.exit(1);
+            }
         }
     }
 
@@ -496,7 +342,37 @@ if (require.main === module) {
 
     analyzer.analyze()
         .then(result => {
-            console.log(JSON.stringify(result, null, 2));
+            // Generate report based on format
+            const reportGenerator = new ReportGenerator(result, options);
+            let output;
+
+            switch (options.format) {
+                case 'markdown':
+                    output = reportGenerator.generate('markdown');
+                    break;
+                case 'summary':
+                    output = reportGenerator.generate('summary');
+                    break;
+                case 'scorecard':
+                    output = reportGenerator.generate('scorecard');
+                    break;
+                default:
+                    output = result;
+            }
+
+            // Output
+            if (options.outputFile) {
+                const fs = require('fs');
+                const content = typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+                fs.writeFileSync(options.outputFile, content);
+                console.log(`Report saved to ${options.outputFile}`);
+            } else {
+                if (typeof output === 'string') {
+                    console.log(output);
+                } else {
+                    console.log(JSON.stringify(output, null, 2));
+                }
+            }
         })
         .catch(error => {
             console.error('Analysis failed:', error.message);

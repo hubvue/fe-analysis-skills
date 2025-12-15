@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "fe-analysis-plugin",
+  "name": "fe-analysis-skills",
   "owner": {
     "name": "kim",
     "email": "cckcc.kim@gmail.com"
