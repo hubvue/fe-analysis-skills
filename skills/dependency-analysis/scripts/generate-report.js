@@ -26,7 +26,7 @@ class ReportGenerator {
 
     async generateMarkdownReport() {
         const markdown = this.buildMarkdownReport();
-        const filePath = path.join(this.outputPath, 'dependency-analysis-report.md');
+        const filePath = path.join(this.outputPath, 'DEPENDENCY_ANALYSIS_REPORT.md');
         await fs.writeFile(filePath, markdown);
         return filePath;
     }

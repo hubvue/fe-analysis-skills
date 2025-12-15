@@ -105,8 +105,8 @@ node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includ
     "low": []
   },
   "healthScore": 78,
-  "markdownReport": "/path/to/dependency-analysis-report.md",
-  "fixScript": "/path/to/fix-dependencies.sh"
+  "markdownReport": "/path/to/DEPENDENCY_ANALYSIS_REPORT.md",
+  "fixScript": "/path/to/FIX_DEPENDENCIES.sh"
 }
 ```
 
@@ -146,11 +146,11 @@ Options:
 node scripts/generate-report.js analysis-result.json ./reports
 
 # Available formats:
-# - Markdown report (dependency-analysis-report.md)
-# - JSON summary (dependency-summary.json)
-# - CSV issues (dependency-issues.csv)
-# - TeamCity report (teamcity-report.txt)
-# - GitHub Actions report (github-actions-report.json)
+# - Markdown report (DEPENDENCY_ANALYSIS_REPORT.md)
+# - JSON summary (DEPENDENCY_ANALYSIS_SUMMARY.json)
+# - CSV issues (DEPENDENCY_ANALYSIS_ISSUES.csv)
+# - TeamCity report (TEAMCITY_REPORT.txt)
+# - GitHub Actions report (GITHUB_ACTIONS_REPORT.json)
 ```
 
 ## Integration Examples
@@ -168,7 +168,7 @@ node scripts/generate-report.js analysis-result.json ./reports
   uses: actions/upload-artifact@v3
   with:
     name: dependency-analysis
-    path: dependency-analysis-report.md
+    path: DEPENDENCY_ANALYSIS_REPORT.md
 ```
 
 ### TeamCity Integration
