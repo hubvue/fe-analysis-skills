@@ -100,7 +100,7 @@ skills/dependency-analysis/
 - **Health Score**: Overall dependency quality assessment
 - **Bundle Impact Analysis**: Estimated size and optimization potential
 - **Security Scanning**: Basic vulnerability detection
-- **Multi-format Output**: JSON, CSV, Markdown, HTML reports
+- **Multi-format Output**: JSON, CSV, Markdown reports
 - **Circular Dependency Visualization**: Detailed cycle paths
 
 ### Fixed Issues

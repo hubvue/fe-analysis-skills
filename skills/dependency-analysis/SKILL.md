@@ -1,6 +1,6 @@
 ---
 name: dependency-analysis
-description: Enhanced dependency analyzer with comprehensive reporting, visualizations, and actionable recommendations. Use when you need to optimize frontend project dependencies, detect security vulnerabilities, identify unused packages, find duplicate functionality, analyze dependency impact, generate cleanup scripts, or produce detailed HTML/Markdown reports. Supports JavaScript, TypeScript, Vue, React, Angular, and modern build tools with parallel processing and incremental analysis capabilities.
+description: Enhanced dependency analyzer with comprehensive markdown reporting and actionable recommendations. Use when you need to optimize frontend project dependencies, detect security vulnerabilities, identify unused packages, find duplicate functionality, analyze dependency impact, generate cleanup scripts, or produce detailed Markdown reports. Supports JavaScript, TypeScript, Vue, React, Angular, and modern build tools with parallel processing and incremental analysis capabilities.
 ---
 
 # Enhanced Dependency Analyzer
@@ -11,12 +11,11 @@ Comprehensive dependency analysis tool with visual reports, categorization, and 
 
 ### Basic Analysis
 ```bash
-# Run enhanced analyzer with HTML report
-node scripts/enhanced-analyzer.js /path/to/project --generateHtml
+# Run enhanced analyzer with markdown report
+node scripts/enhanced-analyzer.js /path/to/project
 
 # Full analysis with all features
 node scripts/enhanced-analyzer.js /path/to/project \
-  --generateHtml \
   --generateFixScript \
   --generateGraph \
   --checkPeerDependencies \
@@ -49,8 +48,8 @@ node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includ
 - **Version Conflicts**: Peer dependency resolution issues
 - **Circular Dependencies**: Import cycle detection with impact analysis
 
-### 📊 Visual Analysis
-- **HTML Reports**: Interactive, shareable analysis reports
+### 📊 Analysis Reports
+- **Markdown Reports**: Comprehensive, readable analysis reports
 - **Dependency Graphs**: Visual dependency relationship mapping
 - **Category Breakdowns**: Frontend, backend, devtools, testing, build tools
 - **Health Scoring**: Overall dependency quality metrics
@@ -65,7 +64,7 @@ node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includ
 ### 🛠️ Automation Tools
 - **Auto-fix Scripts**: Generated shell scripts for cleanup
 - **CI/CD Integration**: TeamCity, GitHub Actions reports
-- **Multiple Formats**: JSON, CSV, Markdown, HTML outputs
+- **Multiple Formats**: JSON, CSV, Markdown outputs
 - **Priority Recommendations**: Actionable improvement suggestions
 
 ## Output Formats
@@ -106,18 +105,18 @@ node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includ
     "low": []
   },
   "healthScore": 78,
-  "htmlReport": "/path/to/dependency-analysis-report.html",
+  "markdownReport": "/path/to/dependency-analysis-report.md",
   "fixScript": "/path/to/fix-dependencies.sh"
 }
 ```
 
-### HTML Report Features
-- Interactive dashboard with charts
-- Dependency visualizations
+### Markdown Report Features
+- Comprehensive analysis summary
+- Dependency category breakdowns
 - Priority-based recommendations
-- Quick action buttons
-- Downloadable reports
-- Mobile-responsive design
+- Quick fix commands
+- Security vulnerability details
+- Easy integration with documentation tools
 
 ## Command Line Interface
 
@@ -126,7 +125,6 @@ node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includ
 node scripts/enhanced-analyzer.js <project-path> [options]
 
 Options:
-  --generateHtml      Generate interactive HTML report
   --generateFixScript Generate auto-fix shell script
   --generateGraph     Generate dependency graph data
   --parallel          Use parallel processing for speed
@@ -162,7 +160,6 @@ node scripts/generate-report.js analysis-result.json ./reports
 - name: Analyze Dependencies
   run: |
     node scripts/enhanced-analyzer.js . \
-      --generateHtml \
       --generateFixScript \
       --checkSecurity \
       --checkOutdated
@@ -171,7 +168,7 @@ node scripts/generate-report.js analysis-result.json ./reports
   uses: actions/upload-artifact@v3
   with:
     name: dependency-analysis
-    path: dependency-analysis-report.html
+    path: dependency-analysis-report.md
 ```
 
 ### TeamCity Integration
@@ -188,7 +185,6 @@ node scripts/enhanced-analyzer.js . --checkSecurity
 const analyzer = new EnhancedDependencyAnalyzer('/path/to/project', {
   parallel: true,
   incremental: true,
-  generateHtml: true,
   generateFixScript: true,
   checkSecurity: true,
   maxDepth: 10,
@@ -204,7 +200,6 @@ const result = await analyzer.analyze();
 # Analyze multiple projects
 for project in project1 project2 project3; do
   node scripts/enhanced-analyzer.js $project \
-    --generateHtml \
     --generateFixScript
 done
 ```

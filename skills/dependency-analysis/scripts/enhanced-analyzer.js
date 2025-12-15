@@ -25,7 +25,6 @@ class EnhancedDependencyAnalyzer {
             checkSecurity: options.checkSecurity || false,
             includeDev: options.includeDev !== false,
             generateGraph: options.generateGraph || false,
-            generateHtml: options.generateHtml || false,
             generateFixScript: options.generateFixScript || false,
             maxDepth: options.maxDepth || 5,
             parallel: options.parallel || false,
@@ -161,13 +160,12 @@ class EnhancedDependencyAnalyzer {
                 await this.generateDependencyGraph();
             }
 
-            if (this.options.generateHtml) {
-                await this.generateHtmlReport();
-            }
-
             if (this.options.generateFixScript) {
                 await this.generateFixScript();
             }
+
+            // Generate markdown report
+            await this.generateMarkdownReport();
 
         } catch (error) {
             this.result.success = false;
@@ -992,128 +990,11 @@ class EnhancedDependencyAnalyzer {
         return sizeMap[info.category] || 10;
     }
 
-    async generateHtmlReport() {
-        const htmlTemplate = await this.getHtmlTemplate();
-        const html = htmlTemplate
-            .replace('{{TITLE}}', `Dependency Analysis - ${this.result.project.name}`)
-            .replace('{{DATA}}', JSON.stringify(this.result, null, 2))
-            .replace('{{TIMESTAMP}}', new Date().toLocaleString());
-
-        const outputPath = path.join(this.projectPath, 'dependency-analysis-report.html');
-        await fs.writeFile(outputPath, html);
-
-        this.result.htmlReport = outputPath;
-    }
-
-    async getHtmlTemplate() {
-        return `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{TITLE}}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .summary-card { background: white; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; text-align: center; }
-        .summary-card h3 { margin: 0; font-size: 24px; color: #333; }
-        .summary-card p { margin: 5px 0 0; color: #666; }
-        .section { margin-bottom: 30px; }
-        .section h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .issue-item { background: #fff5f5; border-left: 4px solid #fc8181; padding: 10px; margin: 5px 0; }
-        .recommendation { padding: 15px; margin: 10px 0; border-radius: 5px; }
-        .high { background: #fed7d7; border-left: 4px solid #e53e3e; }
-        .medium { background: #feebc8; border-left: 4px solid #dd6b20; }
-        .low { background: #c6f6d5; border-left: 4px solid #38a169; }
-        #graph { height: 500px; border: 1px solid #ddd; border-radius: 8px; }
-        .chart-container { height: 300px; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Dependency Analysis Report</h1>
-            <p>Generated on {{TIMESTAMP}}</p>
-        </div>
-
-        <div class="summary" id="summary"></div>
-
-        <div class="section">
-            <h2>Dependency Categories</h2>
-            <div class="chart-container">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Recommendations</h2>
-            <div id="recommendations"></div>
-        </div>
-
-        <div class="section">
-            <h2>Dependency Graph</h2>
-            <div id="graph"></div>
-        </div>
-    </div>
-
-    <script>
-        const data = {{DATA}};
-
-        // Render summary
-        const summary = document.getElementById('summary');
-        const summaryCards = [
-            { label: 'Total Dependencies', value: data.summary.total, color: '#4299e1' },
-            { label: 'Unused', value: data.summary.unused, color: '#f56565' },
-            { label: 'Missing', value: data.summary.missing, color: '#ed8936' },
-            { label: 'Vulnerable', value: data.summary.vulnerable, color: '#e53e3e' },
-            { label: 'Outdated', value: data.summary.outdated, color: '#38a169' },
-            { label: 'Phantom', value: data.summary.phantom, color: '#805ad5' }
-        ];
-
-        summaryCards.forEach(card => {
-            summary.innerHTML += \`
-                <div class="summary-card">
-                    <h3 style="color: \${card.color}">\${card.value}</h3>
-                    <p>\${card.label}</p>
-                </div>
-            \`;
-        });
-
-        // Category chart
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(data.categories),
-                datasets: [{
-                    data: Object.values(data.categories).map(c => c.count),
-                    backgroundColor: ['#4299e1', '#48bb78', '#ed8936', '#f56565', '#805ad5', '#38a169']
-                }]
-            }
-        });
-
-        // Recommendations
-        const recommendations = document.getElementById('recommendations');
-        ['high', 'medium', 'low'].forEach(priority => {
-            const recs = data.recommendations[priority];
-            if (recs && recs.length > 0) {
-                recs.forEach(rec => {
-                    recommendations.innerHTML += \`
-                        <div class="recommendation \${priority}">
-                            <h3>\${rec.title}</h3>
-                            <p>\${rec.description}</p>
-                            <p><strong>Action:</strong> \${rec.action}</p>
-                        </div>
-                    \`;
-                });
-            }
-        });
-    </script>
-</body>
-</html>`;
+    async generateMarkdownReport() {
+        const ReportGenerator = require('./generate-report');
+        const reportGenerator = new ReportGenerator(this.result, this.projectPath);
+        const markdownPath = await reportGenerator.generateMarkdownReport();
+        this.result.markdownReport = markdownPath;
     }
 
     async generateFixScript() {
@@ -1190,7 +1071,6 @@ if (require.main === module) {
         console.error('Usage: node enhanced-analyzer.js <project_path> [options]');
         console.error('');
         console.error('Options:');
-        console.error('  --generateHtml      Generate HTML report');
         console.error('  --generateFixScript Generate fix script');
         console.error('  --generateGraph     Generate dependency graph');
         console.error('  --parallel          Use parallel processing');
@@ -1232,8 +1112,8 @@ if (require.main === module) {
                 console.log(JSON.stringify(result));
             }
 
-            if (result.htmlReport) {
-                console.log(`\n📊 HTML report generated: ${result.htmlReport}`);
+            if (result.markdownReport) {
+                console.log(`\n📝 Markdown report generated: ${result.markdownReport}`);
             }
 
             if (result.fixScript) {

@@ -432,23 +432,3 @@ lodash,^4.17.21,dependencies,utility,false,0KB,Remove unused
 | react | ^18.2.0 | dependencies | framework | ✅ | 245KB | - |
 | lodash | ^4.17.21 | dependencies | utility | ❌ | 0KB | Remove unused |
 
-### HTML Report
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dependency Analysis Report</title>
-    <style>
-        .health-score { font-size: 2em; font-weight: bold; }
-        .issue-high { color: red; }
-        .issue-medium { color: orange; }
-        .issue-low { color: yellow; }
-    </style>
-</head>
-<body>
-    <h1>Dependency Analysis Report</h1>
-    <div class="health-score">75/100</div>
-    <!-- ... report content ... -->
-</body>
-</html>
-```

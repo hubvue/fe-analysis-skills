@@ -1,4 +1,5 @@
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const acorn = require('acorn');
 const walk = require('acorn-walk');
@@ -50,7 +51,7 @@ class ImportAnalyzer {
 
     async analyzeFile(filePath) {
         try {
-            const content = await fs.readFile(filePath, 'utf-8');
+            const content = await fsPromises.readFile(filePath, 'utf-8');
             const imports = [];
 
             // Handle different file types
@@ -377,7 +378,7 @@ class ImportAnalyzer {
         const tsConfigPath = path.join(this.projectPath, 'tsconfig.json');
         if (await this.fileExists(tsConfigPath)) {
             try {
-                const content = await fs.readFile(tsConfigPath, 'utf-8');
+                const content = await fsPromises.readFile(tsConfigPath, 'utf-8');
                 this.tsConfig = JSON.parse(content);
             } catch (error) {
                 // Invalid tsconfig.json
@@ -424,7 +425,7 @@ class ImportAnalyzer {
         if (await this.fileExists(viteConfigPath)) {
             try {
                 // This is a simplified approach - in real implementation, you'd want to use dynamic import
-                const content = await fs.readFile(viteConfigPath, 'utf-8');
+                const content = await fsPromises.readFile(viteConfigPath, 'utf-8');
                 const aliasMatch = content.match(/resolve:\s*\{[^}]*alias:\s*\{([^}]*)\}/);
                 if (aliasMatch) {
                     // Extract aliases with regex (simplified)
@@ -444,7 +445,7 @@ class ImportAnalyzer {
         const webpackConfigPath = path.join(this.projectPath, 'webpack.config.js');
         if (await this.fileExists(webpackConfigPath)) {
             try {
-                const content = await fs.readFile(webpackConfigPath, 'utf-8');
+                const content = await fsPromises.readFile(webpackConfigPath, 'utf-8');
                 const aliasMatch = content.match(/resolve:\s*\{[^}]*alias:\s*\{([^}]*)\}/);
                 if (aliasMatch) {
                     const aliasRegex = /['"`]([^'"`]+)['"`]\s*:\s*path\.resolve\([^)]*\)/g;
@@ -464,7 +465,7 @@ class ImportAnalyzer {
         const jestConfigPath = path.join(this.projectPath, 'jest.config.js');
         if (await this.fileExists(jestConfigPath)) {
             try {
-                const content = await fs.readFile(jestConfigPath, 'utf-8');
+                const content = await fsPromises.readFile(jestConfigPath, 'utf-8');
                 const moduleNameMatch = content.match(/moduleNameMapping:\s*\{([^}]*)\}/);
                 if (moduleNameMatch) {
                     const aliasRegex = /['"`]([^'"`]+)['"`]\s*:\s*['"`]([^'"`]+)['"`]/g;
@@ -481,7 +482,7 @@ class ImportAnalyzer {
 
     async fileExists(filePath) {
         try {
-            await fs.access(filePath);
+            await fsPromises.access(filePath);
             return true;
         } catch {
             return false;
