@@ -16,7 +16,7 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/analyzing-architecture",
+        "./skills/architecture-analysis",
         "./skills/dependency-analysis"
       ]
     }
