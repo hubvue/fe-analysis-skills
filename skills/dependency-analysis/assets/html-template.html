@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dependency Analysis Report - {{PROJECT_NAME}}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header .meta {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .summary-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .summary-card p {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .card-total { border-top: 4px solid #4299e1; }
+        .card-total i { color: #4299e1; }
+
+        .card-unused { border-top: 4px solid #f56565; }
+        .card-unused i { color: #f56565; }
+
+        .card-missing { border-top: 4px solid #ed8936; }
+        .card-missing i { color: #ed8936; }
+
+        .card-vulnerable { border-top: 4px solid #e53e3e; }
+        .card-vulnerable i { color: #e53e3e; }
+
+        .card-outdated { border-top: 4px solid #38a169; }
+        .card-outdated i { color: #38a169; }
+
+        .card-phantom { border-top: 4px solid #805ad5; }
+        .card-phantom i { color: #805ad5; }
+
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-content {
+            padding: 30px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .category-item:hover {
+            background: #e9ecef;
+        }
+
+        .category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .category-icon.frontend { background: #4299e1; }
+        .category-icon.backend { background: #48bb78; }
+        .category-icon.devtools { background: #ed8936; }
+        .category-icon.testing { background: #f56565; }
+        .category-icon.build { background: #805ad5; }
+        .category-icon.other { background: #718096; }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .recommendations {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .recommendation {
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid;
+        }
+
+        .recommendation.high {
+            background: #fed7d7;
+            border-left-color: #e53e3e;
+        }
+
+        .recommendation.medium {
+            background: #feebc8;
+            border-left-color: #dd6b20;
+        }
+
+        .recommendation.low {
+            background: #c6f6d5;
+            border-left-color: #38a169;
+        }
+
+        .recommendation h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .issues-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .issue-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .issue-item:hover {
+            transform: translateX(5px);
+        }
+
+        .issue-item.vulnerable {
+            border-left-color: #e53e3e;
+            background: #fff5f5;
+        }
+
+        .issue-item.missing {
+            border-left-color: #ed8936;
+            background: #fffbf0;
+        }
+
+        .issue-item.unused {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .issue-severity {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .severity-high { background: #e53e3e; }
+        .severity-medium { background: #dd6b20; }
+        .severity-low { background: #38a169; }
+
+        .health-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .score-excellent { background: linear-gradient(135deg, #38a169, #48bb78); }
+        .score-good { background: linear-gradient(135deg, #4299e1, #63b3ed); }
+        .score-fair { background: linear-gradient(135deg, #ed8936, #f6ad55); }
+        .score-poor { background: linear-gradient(135deg, #e53e3e, #fc8181); }
+
+        .quick-actions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+        }
+
+        #graph {
+            height: 600px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tab.active {
+            color: #4299e1;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #4299e1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4299e1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-project-diagram"></i> Dependency Analysis Report</h1>
+            <div class="meta">
+                <p><strong>{{PROJECT_NAME}}</strong> v{{PROJECT_VERSION}}</p>
+                <p>Generated on {{TIMESTAMP}}</p>
+            </div>
+        </div>
+
+        <div class="summary-grid" id="summary-grid">
+            <!-- Summary cards will be populated here -->
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-heartbeat"></i> Dependency Health Score</h2>
+            </div>
+            <div class="section-content">
+                <div class="health-score">
+                    <div class="score-circle" id="health-score">
+                        <span>{{HEALTH_SCORE}}</span>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="copyCommands('all')">
+                            <i class="fas fa-copy"></i> Copy All Commands
+                        </button>
+                        <button class="btn btn-primary" onclick="copyCommands('security')">
+                            <i class="fas fa-shield-alt"></i> Security Fixes
+                        </button>
+                        <button class="btn btn-primary" onclick="copyCommands('cleanup')">
+                            <i class="fas fa-broom"></i> Cleanup Commands
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadReport('json')">
+                            <i class="fas fa-download"></i> Download JSON
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadReport('csv')">
+                            <i class="fas fa-file-csv"></i> Download CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-layer-group"></i> Dependency Categories</h2>
+            </div>
+            <div class="section-content">
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="category-grid" id="category-grid">
+                    <!-- Category items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Issues & Recommendations</h2>
+            </div>
+            <div class="section-content">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('recommendations')">Recommendations</button>
+                    <button class="tab" onclick="showTab('vulnerabilities')">Security</button>
+                    <button class="tab" onclick="showTab('missing')">Missing</button>
+                    <button class="tab" onclick="showTab('unused')">Unused</button>
+                    <button class="tab" onclick="showTab('outdated')">Outdated</button>
+                </div>
+
+                <div id="recommendations" class="tab-content active">
+                    <div class="recommendations" id="recommendations-list">
+                        <!-- Recommendations will be populated here -->
+                    </div>
+                </div>
+
+                <div id="vulnerabilities" class="tab-content">
+                    <div class="issues-grid" id="vulnerabilities-list">
+                        <!-- Vulnerabilities will be populated here -->
+                    </div>
+                </div>
+
+                <div id="missing" class="tab-content">
+                    <div class="issues-grid" id="missing-list">
+                        <!-- Missing deps will be populated here -->
+                    </div>
+                </div>
+
+                <div id="unused" class="tab-content">
+                    <div class="issues-grid" id="unused-list">
+                        <!-- Unused deps will be populated here -->
+                    </div>
+                </div>
+
+                <div id="outdated" class="tab-content">
+                    <div class="issues-grid" id="outdated-list">
+                        <!-- Outdated deps will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-project-diagram"></i> Dependency Graph</h2>
+            </div>
+            <div class="section-content">
+                <div id="graph"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data will be injected here
+        const analysisData = {{ANALYSIS_DATA}};
+
+        // Initialize the report
+        document.addEventListener('DOMContentLoaded', function() {
+            renderSummaryCards();
+            renderCategoryChart();
+            renderCategoryGrid();
+            renderRecommendations();
+            renderIssues();
+            renderDependencyGraph();
+            updateHealthScore();
+        });
+
+        function renderSummaryCards() {
+            const grid = document.getElementById('summary-grid');
+            const cards = [
+                {
+                    icon: 'fa-cubes',
+                    title: analysisData.summary.total,
+                    subtitle: 'Total Dependencies',
+                    class: 'card-total'
+                },
+                {
+                    icon: 'fa-trash',
+                    title: analysisData.summary.unused,
+                    subtitle: 'Unused',
+                    class: 'card-unused'
+                },
+                {
+                    icon: 'fa-exclamation-circle',
+                    title: analysisData.summary.missing,
+                    subtitle: 'Missing',
+                    class: 'card-missing'
+                },
+                {
+                    icon: 'fa-shield-alt',
+                    title: analysisData.summary.vulnerable,
+                    subtitle: 'Vulnerable',
+                    class: 'card-vulnerable'
+                },
+                {
+                    icon: 'fa-sync-alt',
+                    title: analysisData.summary.outdated,
+                    subtitle: 'Outdated',
+                    class: 'card-outdated'
+                },
+                {
+                    icon: 'fa-ghost',
+                    title: analysisData.summary.phantom,
+                    subtitle: 'Phantom',
+                    class: 'card-phantom'
+                }
+            ];
+
+            grid.innerHTML = cards.map(card => `
+                <div class="summary-card ${card.class}">
+                    <i class="fas ${card.icon}"></i>
+                    <h3>${card.title}</h3>
+                    <p>${card.subtitle}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderCategoryChart() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const categories = analysisData.categories;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories).map(k => k.charAt(0).toUpperCase() + k.slice(1)),
+                    datasets: [{
+                        data: Object.values(categories).map(c => c.count),
+                        backgroundColor: [
+                            '#4299e1',
+                            '#48bb78',
+                            '#ed8936',
+                            '#f56565',
+                            '#805ad5',
+                            '#718096'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryGrid() {
+            const grid = document.getElementById('category-grid');
+            const categories = analysisData.categories;
+            const icons = {
+                frontend: 'fa-laptop-code',
+                backend: 'fa-server',
+                devtools: 'fa-tools',
+                testing: 'fa-vial',
+                build: 'fa-cogs',
+                other: 'fa-folder'
+            };
+
+            grid.innerHTML = Object.entries(categories).map(([key, value]) => `
+                <div class="category-item">
+                    <div class="category-icon ${key}">
+                        <i class="fas ${icons[key] || 'fa-folder'}"></i>
+                    </div>
+                    <div>
+                        <h4>${key.charAt(0).toUpperCase() + key.slice(1)}</h4>
+                        <p>${value.count} packages</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecommendations() {
+            const list = document.getElementById('recommendations-list');
+            const recommendations = analysisData.recommendations;
+            const icons = {
+                high: 'fa-exclamation-circle',
+                medium: 'fa-exclamation-triangle',
+                low: 'fa-info-circle'
+            };
+
+            ['high', 'medium', 'low'].forEach(priority => {
+                const recs = recommendations[priority] || [];
+                if (recs.length > 0) {
+                    recs.forEach(rec => {
+                        const recEl = document.createElement('div');
+                        recEl.className = `recommendation ${priority}`;
+                        recEl.innerHTML = `
+                            <h3><i class="fas ${icons[priority]}"></i> ${rec.title}</h3>
+                            <p>${rec.description}</p>
+                            <p><strong>Action:</strong> ${rec.action}</p>
+                        `;
+                        list.appendChild(recEl);
+                    });
+                }
+            });
+        }
+
+        function renderIssues() {
+            // Render vulnerabilities
+            const vulnsList = document.getElementById('vulnerabilities-list');
+            if (analysisData.issues.vulnerabilities.length > 0) {
+                vulnsList.innerHTML = analysisData.issues.vulnerabilities.map(vuln => `
+                    <div class="issue-item vulnerable">
+                        <div class="issue-header">
+                            <span class="issue-title">${vuln.name} (${vuln.version})</span>
+                            <span class="issue-severity severity-${vuln.severity}">${vuln.severity}</span>
+                        </div>
+                        <p>${vuln.title}</p>
+                        <p><strong>Fix:</strong> Update to ${vuln.patchedIn} or later</p>
+                    </div>
+                `).join('');
+            } else {
+                vulnsList.innerHTML = '<p>No security vulnerabilities found! 🎉</p>';
+            }
+
+            // Render missing dependencies
+            const missingList = document.getElementById('missing-list');
+            if (analysisData.issues.missing.length > 0) {
+                missingList.innerHTML = analysisData.issues.missing.map(missing => `
+                    <div class="issue-item missing">
+                        <div class="issue-header">
+                            <span class="issue-title">${missing.name}</span>
+                            <span class="issue-severity severity-${missing.severity}">${missing.severity}</span>
+                        </div>
+                        <p>Used in ${missing.usedIn.length} files</p>
+                        <p><strong>Fix:</strong> ${missing.npmCommand}</p>
+                    </div>
+                `).join('');
+            } else {
+                missingList.innerHTML = '<p>No missing dependencies! 🎉</p>';
+            }
+
+            // Render unused dependencies
+            const unusedList = document.getElementById('unused-list');
+            if (analysisData.issues.unused.length > 0) {
+                unusedList.innerHTML = analysisData.issues.unused.map(unused => `
+                    <div class="issue-item unused">
+                        <div class="issue-header">
+                            <span class="issue-title">${unused.name} (${unused.version})</span>
+                            <span class="issue-severity">Size: ${unused.size}</span>
+                        </div>
+                        <p>${unused.reason}</p>
+                        <p><strong>Fix:</strong> ${unused.suggestedAction}</p>
+                    </div>
+                `).join('');
+            } else {
+                unusedList.innerHTML = '<p>No unused dependencies! 🎉</p>';
+            }
+
+            // Render outdated dependencies
+            const outdatedList = document.getElementById('outdated-list');
+            if (analysisData.issues.outdated.length > 0) {
+                outdatedList.innerHTML = analysisData.issues.outdated.map(outdated => `
+                    <div class="issue-item">
+                        <div class="issue-header">
+                            <span class="issue-title">${outdated.name}</span>
+                            <span class="issue-severity severity-low">${outdated.updateType}</span>
+                        </div>
+                        <p>Current: ${outdated.current} → Latest: ${outdated.latest}</p>
+                        <p><strong>Fix:</strong> npm update ${outdated.name}</p>
+                    </div>
+                `).join('');
+            } else {
+                outdatedList.innerHTML = '<p>All dependencies are up to date! 🎉</p>';
+            }
+        }
+
+        function renderDependencyGraph() {
+            const container = document.getElementById('graph');
+            const graphData = analysisData.graph;
+
+            if (graphData && graphData.nodes.length > 0) {
+                const nodes = new vis.DataSet(graphData.nodes);
+                const edges = new vis.DataSet(graphData.edges);
+
+                const data = { nodes, edges };
+                const options = {
+                    nodes: {
+                        shape: 'dot',
+                        size: 16,
+                        font: {
+                            size: 14,
+                            color: '#333'
+                        },
+                        borderWidth: 2
+                    },
+                    edges: {
+                        width: 1,
+                        color: { inherit: 'from' },
+                        smooth: {
+                            type: 'continuous'
+                        }
+                    },
+                    physics: {
+                        stabilization: false,
+                        barnesHut: {
+                            gravitationalConstant: -8000,
+                            springConstant: 0.04,
+                            springLength: 100
+                        }
+                    },
+                    interaction: {
+                        tooltipDelay: 200,
+                        hideEdgesOnDrag: true
+                    }
+                };
+
+                new vis.Network(container, data, options);
+            } else {
+                container.innerHTML = '<div class="loading"><p>Dependency graph data not available</p></div>';
+            }
+        }
+
+        function updateHealthScore() {
+            const scoreElement = document.getElementById('health-score');
+            const score = analysisData.healthScore || calculateHealthScore();
+            scoreElement.textContent = score;
+
+            // Update color based on score
+            scoreElement.className = 'score-circle';
+            if (score >= 90) {
+                scoreElement.classList.add('score-excellent');
+            } else if (score >= 70) {
+                scoreElement.classList.add('score-good');
+            } else if (score >= 50) {
+                scoreElement.classList.add('score-fair');
+            } else {
+                scoreElement.classList.add('score-poor');
+            }
+        }
+
+        function calculateHealthScore() {
+            let score = 100;
+            score -= Math.min(40, analysisData.summary.vulnerable * 20);
+            score -= Math.min(30, analysisData.summary.missing * 10);
+            score -= Math.min(20, analysisData.summary.unused * 2);
+            score -= Math.min(10, analysisData.summary.outdated);
+            return Math.max(0, Math.round(score));
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function copyCommands(type) {
+            let commands = [];
+
+            if (type === 'all' || type === 'security') {
+                // Security commands
+                analysisData.issues.vulnerabilities.forEach(vuln => {
+                    commands.push(`npm update ${vuln.name}`);
+                });
+            }
+
+            if (type === 'all' || type === 'cleanup') {
+                // Install missing
+                const missing = analysisData.issues.missing
+                    .filter(m => m.type !== 'peer-dependency')
+                    .map(m => m.name);
+                if (missing.length > 0) {
+                    commands.push(`npm install ${missing.join(' ')}`);
+                }
+
+                // Remove unused
+                const unused = analysisData.issues.unused
+                    .filter(u => u.confidence === 'high')
+                    .map(u => u.name);
+                if (unused.length > 0) {
+                    commands.push(`npm uninstall ${unused.join(' ')}`);
+                }
+
+                // Update all
+                commands.push('npm update');
+            }
+
+            if (commands.length > 0) {
+                navigator.clipboard.writeText(commands.join('\n'));
+                alert('Commands copied to clipboard!');
+            } else {
+                alert('No commands to copy for this category.');
+            }
+        }
+
+        function downloadReport(format) {
+            const dataStr = format === 'json'
+                ? JSON.stringify(analysisData, null, 2)
+                : convertToCSV(analysisData);
+
+            const dataBlob = new Blob([dataStr], { type: format === 'json' ? 'application/json' : 'text/csv' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `dependency-analysis.${format}`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function convertToCSV(data) {
+            const issues = [];
+
+            // Collect all issues
+            data.issues.vulnerabilities.forEach(v => issues.push(['Vulnerability', v.name, v.version, v.severity, `Update to ${v.patchedIn}`]));
+            data.issues.missing.forEach(m => issues.push(['Missing', m.name, '-', m.severity, m.npmCommand]));
+            data.issues.unused.forEach(u => issues.push(['Unused', u.name, u.version, 'Medium', `npm uninstall ${u.name}`]));
+            data.issues.outdated.forEach(o => issues.push(['Outdated', o.name, `${o.current} → ${o.latest}`, 'Low', `npm update ${o.name}`]));
+
+            // Convert to CSV
+            const csv = [
+                ['Type', 'Package', 'Version', 'Severity', 'Fix'],
+                ...issues
+            ].map(row => row.join(',')).join('\n');
+
+            return csv;
+        }
+    </script>
+</body>
+</html>

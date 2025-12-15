@@ -1,103 +1,238 @@
 ---
 name: dependency-analysis
-description: Advanced dependency analyzer with peer dependency detection, import analysis, and deep dependency inspection. Use when you need to clean up project dependencies, detect peer dependency conflicts, find unused packages, identify phantom dependencies, detect circular imports, check security vulnerabilities, or optimize bundle size. Analyzes JavaScript/TypeScript imports, CSS imports, framework-specific patterns, and provides actionable recommendations for dependency management.
+description: Enhanced dependency analyzer with comprehensive reporting, visualizations, and actionable recommendations. Use when you need to optimize frontend project dependencies, detect security vulnerabilities, identify unused packages, find duplicate functionality, analyze dependency impact, generate cleanup scripts, or produce detailed HTML/Markdown reports. Supports JavaScript, TypeScript, Vue, React, Angular, and modern build tools with parallel processing and incremental analysis capabilities.
 ---
 
-# Advanced Dependency Analyzer
+# Enhanced Dependency Analyzer
 
-Comprehensive dependency analysis tool that identifies unused packages, missing dependencies, phantom dependencies, peer dependency conflicts, and circular imports.
+Comprehensive dependency analysis tool with visual reports, categorization, and actionable recommendations for optimizing frontend project dependencies.
 
 ## Quick Start
 
-Analyze any JavaScript/TypeScript project:
-
-```bash
-node scripts/analyze-dependencies-v2.js /path/to/project
-
-# With options
-node scripts/analyze-dependencies-v2.js /path/to/project --checkPeerDependencies --checkOutdated
-```
-
-## Core Capabilities
-
-### Dependency Detection
-- **Unused Dependencies**: Packages installed but never imported
-- **Missing Dependencies**: Imports without corresponding packages
-- **Phantom Dependencies**: Nested dependencies that work but aren't declared
-- **Peer Dependencies**: Conflicts and missing peer dependencies
-- **Circular Dependencies**: Import cycles that cause runtime issues
-
-### Advanced Features
-- **Deep Import Analysis**: Supports ES6, CommonJS, dynamic imports, TypeScript path mapping
-- **Framework Support**: Vue.js, React, Svelte, Next.js, Nuxt.js specific patterns
-- **Style Imports**: CSS @import, SCSS @use/@forward detection
-- **Alias Resolution**: TypeScript paths, Webpack aliases, Vite aliases
-- **Security Scanning**: Known vulnerability detection
-- **Version Analysis**: Outdated package identification
-- **Health Scoring**: Overall dependency quality assessment
-
-## Usage Examples
-
 ### Basic Analysis
 ```bash
-node scripts/analyze-dependencies-v2.js .
-```
+# Run enhanced analyzer with HTML report
+node scripts/enhanced-analyzer.js /path/to/project --generateHtml
 
-### Full Analysis with All Features
-```bash
-node scripts/analyze-dependencies-v2.js . \
+# Full analysis with all features
+node scripts/enhanced-analyzer.js /path/to/project \
+  --generateHtml \
+  --generateFixScript \
+  --generateGraph \
   --checkPeerDependencies \
   --checkOutdated \
-  --checkSecurity \
-  --scope=all \
-  --includeDev
+  --checkSecurity
 ```
 
-### Production Dependencies Only
+### Advanced Options
 ```bash
-node scripts/analyze-dependencies-v2.js . --scope=dependencies
+# Parallel processing for large projects
+node scripts/enhanced-analyzer.js /path/to/project --parallel
+
+# Incremental analysis with cache
+node scripts/enhanced-analyzer.js /path/to/project --incremental
+
+# Analyze specific dependency scopes
+node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies
+
+# Production-only analysis
+node scripts/enhanced-analyzer.js /path/to/project --scope=dependencies --includeDev=false
 ```
 
-## Output Format
+## Enhanced Features
 
+### 🔍 Advanced Detection
+- **Unused Dependencies**: Smart detection with confidence scoring
+- **Missing Dependencies**: Runtime error prevention
+- **Phantom Dependencies**: Hidden dependency identification
+- **Duplicate Functionality**: Redundant package detection
+- **Version Conflicts**: Peer dependency resolution issues
+- **Circular Dependencies**: Import cycle detection with impact analysis
+
+### 📊 Visual Analysis
+- **HTML Reports**: Interactive, shareable analysis reports
+- **Dependency Graphs**: Visual dependency relationship mapping
+- **Category Breakdowns**: Frontend, backend, devtools, testing, build tools
+- **Health Scoring**: Overall dependency quality metrics
+- **Trend Analysis**: Historical dependency changes
+
+### 🚀 Performance Features
+- **Parallel Processing**: Faster analysis for large projects
+- **Incremental Analysis**: Cache-based repeat analysis
+- **Smart Exclusions**: Intelligent file/directory filtering
+- **Batch Operations**: Efficient batch dependency checks
+
+### 🛠️ Automation Tools
+- **Auto-fix Scripts**: Generated shell scripts for cleanup
+- **CI/CD Integration**: TeamCity, GitHub Actions reports
+- **Multiple Formats**: JSON, CSV, Markdown, HTML outputs
+- **Priority Recommendations**: Actionable improvement suggestions
+
+## Output Formats
+
+### Enhanced JSON Output
 ```json
 {
   "success": true,
-  "data": {
-    "summary": {
-      "total": 150,
-      "unused": 5,
-      "missing": 2,
-      "phantom": 3,
-      "outdated": 10,
-      "vulnerable": 1,
-      "peerConflicts": 2,
-      "circular": 1
-    },
-    "health": {
-      "score": 75,
-      "issues": [
-        "Remove 5 unused dependencies",
-        "Install 2 missing dependencies"
-      ]
-    }
-  }
+  "timestamp": "2024-01-15T10:30:00Z",
+  "project": {
+    "name": "my-project",
+    "version": "1.0.0",
+    "path": "/path/to/project"
+  },
+  "summary": {
+    "total": 150,
+    "unused": 5,
+    "missing": 2,
+    "phantom": 3,
+    "outdated": 10,
+    "vulnerable": 1,
+    "peerConflicts": 2,
+    "circular": 1,
+    "duplicate": 3,
+    "versionConflicts": 2
+  },
+  "categories": {
+    "frontend": { "count": 45, "size": "2.3MB", "packages": [] },
+    "backend": { "count": 12, "size": "1.1MB", "packages": [] },
+    "devtools": { "count": 28, "size": "890KB", "packages": [] },
+    "testing": { "count": 15, "size": "450KB", "packages": [] },
+    "build": { "count": 20, "size": "670KB", "packages": [] },
+    "other": { "count": 30, "size": "1.2MB", "packages": [] }
+  },
+  "recommendations": {
+    "high": [],
+    "medium": [],
+    "low": []
+  },
+  "healthScore": 78,
+  "htmlReport": "/path/to/dependency-analysis-report.html",
+  "fixScript": "/path/to/fix-dependencies.sh"
 }
 ```
 
-## Import Pattern Detection
+### HTML Report Features
+- Interactive dashboard with charts
+- Dependency visualizations
+- Priority-based recommendations
+- Quick action buttons
+- Downloadable reports
+- Mobile-responsive design
 
-The analyzer supports:
-- JavaScript/TypeScript: `import`, `require()`, dynamic imports
-- Vue.js: Script blocks, template imports, style imports
-- Svelte: Script imports, style imports
-- CSS/SCSS: `@import`, `@use`, `@forward`
-- Framework-specific: Next.js dynamic imports, Vue async components
+## Command Line Interface
+
+```bash
+# Enhanced analyzer options
+node scripts/enhanced-analyzer.js <project-path> [options]
+
+Options:
+  --generateHtml      Generate interactive HTML report
+  --generateFixScript Generate auto-fix shell script
+  --generateGraph     Generate dependency graph data
+  --parallel          Use parallel processing for speed
+  --incremental       Use cache for faster repeat analysis
+  --checkPeerDependencies  Analyze peer dependency conflicts
+  --checkOutdated     Check for outdated packages
+  --checkSecurity     Scan for security vulnerabilities
+  --scope=<type>      Dependency scope: all|dependencies|devDependencies|peerDependencies
+  --includeDev        Include devDependencies in analysis
+  --cacheDir=<path>   Cache directory for incremental analysis
+  --pretty            Pretty-print JSON output
+```
+
+## Report Generation
+
+### Generate Multiple Report Formats
+```bash
+# Generate all report formats from analysis results
+node scripts/generate-report.js analysis-result.json ./reports
+
+# Available formats:
+# - Markdown report (dependency-analysis-report.md)
+# - JSON summary (dependency-summary.json)
+# - CSV issues (dependency-issues.csv)
+# - TeamCity report (teamcity-report.txt)
+# - GitHub Actions report (github-actions-report.json)
+```
+
+## Integration Examples
+
+### GitHub Actions Workflow
+```yaml
+- name: Analyze Dependencies
+  run: |
+    node scripts/enhanced-analyzer.js . \
+      --generateHtml \
+      --generateFixScript \
+      --checkSecurity \
+      --checkOutdated
+
+- name: Upload Analysis Report
+  uses: actions/upload-artifact@v3
+  with:
+    name: dependency-analysis
+    path: dependency-analysis-report.html
+```
+
+### TeamCity Integration
+```bash
+# Generate TeamCity-compatible report
+node scripts/enhanced-analyzer.js . --checkSecurity
+# TeamCity report automatically includes build statistics and problems
+```
+
+## Advanced Usage Patterns
+
+### Custom Configuration
+```javascript
+const analyzer = new EnhancedDependencyAnalyzer('/path/to/project', {
+  parallel: true,
+  incremental: true,
+  generateHtml: true,
+  generateFixScript: true,
+  checkSecurity: true,
+  maxDepth: 10,
+  cacheDir: '.dependency-cache',
+  excludePatterns: ['docs/**', 'examples/**']
+});
+
+const result = await analyzer.analyze();
+```
+
+### Batch Project Analysis
+```bash
+# Analyze multiple projects
+for project in project1 project2 project3; do
+  node scripts/enhanced-analyzer.js $project \
+    --generateHtml \
+    --generateFixScript
+done
+```
+
+## Framework Support
+
+The enhanced analyzer provides deep support for:
+- **React**: Hooks, components, lazy loading
+- **Vue**: SFC, script setup, async components
+- **Angular**: Modules, services, lazy routes
+- **Next.js**: Dynamic imports, API routes
+- **Nuxt.js**: Auto-imports, composables
+- **Svelte**: Components, stores
+- **Build Tools**: Webpack, Vite, Rollup, esbuild
+
+## Performance Optimization
+
+- **Parallel Analysis**: Processes files concurrently for large projects
+- **Smart Caching**: Incremental analysis avoids re-scanning unchanged files
+- **Batch Operations**: Groups npm commands for efficiency
+- **Memory Efficient**: Streaming analysis for large codebases
+- **Progress Tracking**: Real-time analysis progress
 
 ## Reference Documentation
 
-Detailed implementation guides and patterns:
-
-- **Import Patterns**: See [import-patterns.md](references/import-patterns.md)
-- **Peer Dependencies**: See [peer-dependency-analysis.md](references/peer-dependency-analysis.md)
-- **Deep Analysis**: See [deep-dependency-patterns.md](references/deep-dependency-patterns.md)
+- **Implementation**: See [enhanced-analyzer.js](scripts/enhanced-analyzer.js)
+- **Report Generation**: See [generate-report.js](scripts/generate-report.js)
+- **Import Patterns**: See [references/import-patterns.md](references/import-patterns.md)
+- **Peer Dependencies**: See [references/peer-dependency-analysis.md](references/peer-dependency-analysis.md)
+- **Deep Analysis**: See [references/deep-dependency-patterns.md](references/deep-dependency-patterns.md)
+- **Output Formats**: See [references/output-formats.md](references/output-formats.md)
