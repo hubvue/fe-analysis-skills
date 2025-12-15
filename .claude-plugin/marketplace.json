@@ -17,7 +17,8 @@
       "strict": false,
       "skills": [
         "./skills/architecture-analysis",
-        "./skills/dependency-analysis"
+        "./skills/dependency-analysis",
+        "./skills/unit-test-generator"
       ]
     }
   ]
