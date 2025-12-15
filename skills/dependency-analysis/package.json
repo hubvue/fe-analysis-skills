@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "acorn": "^8.11.2",
-    "acorn-walk": "^8.3.0"
+    "acorn-walk": "^8.3.0",
+    "semver": "^7.7.3"
   }
 }
