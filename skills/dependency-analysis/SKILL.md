@@ -9,6 +9,11 @@ Comprehensive dependency analysis tool with visual reports, categorization, and 
 
 ## Quick Start
 
+### Installation
+```bash
+npm install
+```
+
 ### Basic Analysis
 ```bash
 # Run enhanced analyzer with markdown report

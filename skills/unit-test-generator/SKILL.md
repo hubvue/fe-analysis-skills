@@ -9,6 +9,12 @@ An intelligent assistant for creating and managing unit tests in frontend projec
 
 ## Quick Start
 
+### Installation
+```bash
+npm install
+```
+
+### Basic Usage
 Generate tests for any file or component:
 
 ```bash
